@@ -1,4 +1,4 @@
-from noise_randomized import snoise2
+from noise_randomized import snoise2, randomize
 import numpy as np
 
 

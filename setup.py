@@ -5,7 +5,7 @@ with open('README.md', 'r') as infile:
 
 setuptools.setup(
     name='simplexgrid',
-    version='0.1.1',
+    version='0.1.2',
     author='Christer Dreierstad',
     author_email='christerdr@outlook.com',
     description='Create grid-like Simplex noise',
