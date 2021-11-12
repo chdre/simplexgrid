@@ -33,15 +33,81 @@ class SimplexGrid:
         return grid
 
 
+class CreateMultipleSimplexGrids:
+    def __init__(self, scales, thresholds, bases, octaves, l1, l2, n1, n2, N, seedgen, **kwargs):
+        self.n1 = n1
+        self.n2 = n2
+        self.l1 = l1
+        self.l2 = l2
+        self.scales = scales
+        self.thresholds = thresholds
+        self.bases = bases
+        self.octaves = octaves
+        self.N = N
+        self.kwargs = kwargs
+        self.seedgen = seedgen
+
+        self.dictionary = {'seed': [],
+                           'scale': [],
+                           'base': [],
+                           'threshold': [],
+                           'grid': [],
+                           'octave': []}
+
+    def __call__(self):
+        rng = np.random.default_rng(42)
+        n_bases = self.bases.shape[0]
+
+        n_12 = self.n1 * self.n2
+
+        for octave in self.octaves:
+            for threshold in self.thresholds:
+                for scale in self.scales:
+                    bases_rng = rng.choice(self.bases, size=self.N, p=np.ones(
+                        n_bases, dtype=np.float16) / n_bases)
+                    simp_grid = SimplexGrid(scale=scale,
+                                            threshold=threshold,
+                                            l1=self.l1,
+                                            l2=self.l2,
+                                            n1=self.n1,
+                                            n2=self.n2)
+
+                    seeds = np.array([self.seedgen() for i in range(self.N)])
+
+                    grids = np.array([simp_grid(seed=s, base=b)
+                                     for s, b in zip(seeds, bases_rng)])
+
+                    porosity = grids.sum(axis=(1, 2)) / n_12
+
+                    # logical_and combined with inds = np.arange(..)[inds] below
+                    # is >3x faster than argwhere
+                    inds = np.logical_and(porosity > 0.1, porosity < 0.5)
+                    if inds.sum() == 0:
+                        break
+                    # Turning boolean inds into actual indices
+                    inds = np.arange(self.N)[inds]
+                    # Creating an array of ones to use for octave, threshold and
+                    # scale for storing in dictionary
+                    n_inds = inds.shape[0]
+                    tmp = np.ones(n_inds)
+
+                    self.dictionary['seed'].append(seeds[inds])
+                    self.dictionary['base'].append(bases_rng[inds])
+                    self.dictionary['grid'].append(grids[inds])
+                    self.dictionary['octave'].append(tmp * octave)
+                    self.dictionary['threshold'].append(tmp * threshold)
+                    self.dictionary['scale'].append(tmp * scale)
+
+        return self.dictionary
+
+
 class SeedGenerator:
     def __init__(self, start, step):
         self.start = start
         self.n = start
         self.step = step
 
-        if start == 0:
-            raise ValueError('Initial seed cannot be 0')
-        elif not isinstance(start, int):
+        if not isinstance(start, int):
             raise ValueError('Start must be of type int')
         elif not isinstance(step, int):
             raise ValueError('Step must be of type int')
