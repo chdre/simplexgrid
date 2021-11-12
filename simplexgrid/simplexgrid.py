@@ -34,6 +34,35 @@ class SimplexGrid:
 
 
 class CreateMultipleSimplexGrids:
+    """Create multiple stepwise Simplex grids and store the parameters used in a
+    dictionary.
+
+    :param scales: Scale of the Simplex noise
+    :type scales: array_like
+    :param thresholds: Threshold for Simplex values
+    :type thresholds: array_like
+    :param bases: Base for Simplex values
+    :type bases: array_like
+    :param octaves: Octaves for Simplex values
+    :type octaves: array_like
+    :param l1: Length of system in a direction
+    :type l1: float
+    :param l2: Length of system in a direction
+    :type l2: float
+    :param n1: Number of grid cells in direction corresponding to length l1
+    :type n1: int
+    :param n2: Number of grid cells in direction corresponding to length l2
+    :type n2: int
+    :param N: Number of samples for each combination of scale, threshold, base
+              and octave
+    :type N: int
+    :param seedgen: Seed generator
+    :type seedgen: iterator
+    :returns dictionary: Dictionary containing Simplex parameters for a specific
+                         grid.
+    :type dictionary: dict
+    """
+
     def __init__(self, scales, thresholds, bases, octaves, l1, l2, n1, n2, N, seedgen, **kwargs):
         self.n1 = n1
         self.n2 = n2
@@ -46,6 +75,7 @@ class CreateMultipleSimplexGrids:
         self.N = N
         self.kwargs = kwargs
         self.seedgen = seedgen
+        self.criterion = criterion
 
         self.dictionary = {'seed': [],
                            'scale': [],
@@ -57,8 +87,6 @@ class CreateMultipleSimplexGrids:
     def __call__(self):
         rng = np.random.default_rng(42)
         n_bases = self.bases.shape[0]
-
-        n_12 = self.n1 * self.n2
 
         for octave in self.octaves:
             for threshold in self.thresholds:
@@ -77,23 +105,9 @@ class CreateMultipleSimplexGrids:
                     grids = np.array([simp_grid(seed=s, base=b)
                                      for s, b in zip(seeds, bases_rng)])
 
-                    porosity = grids.sum(axis=(1, 2)) / n_12
-
-                    # logical_and combined with inds = np.arange(..)[inds] below
-                    # is >3x faster than argwhere
-                    inds = np.logical_and(porosity > 0.1, porosity < 0.5)
-                    if inds.sum() == 0:
-                        break
-                    # Turning boolean inds into actual indices
-                    inds = np.arange(self.N)[inds]
-                    # Creating an array of ones to use for octave, threshold and
-                    # scale for storing in dictionary
-                    n_inds = inds.shape[0]
-                    tmp = np.ones(n_inds)
-
-                    self.dictionary['seed'].append(seeds[inds])
-                    self.dictionary['base'].append(bases_rng[inds])
-                    self.dictionary['grid'].append(grids[inds])
+                    self.dictionary['seed'].append(seeds)
+                    self.dictionary['base'].append(bases_rng)
+                    self.dictionary['grid'].append(grids)
                     self.dictionary['octave'].append(tmp * octave)
                     self.dictionary['threshold'].append(tmp * threshold)
                     self.dictionary['scale'].append(tmp * scale)
