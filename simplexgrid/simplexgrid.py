@@ -58,4 +58,6 @@ class SeedGenerator:
         return f'Last seed: {self.n - 1}'
 
     def __call__(self):
-        return self.n
+        tmp = self.n
+        self.n += 1
+        return tmp
