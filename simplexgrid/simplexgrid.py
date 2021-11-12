@@ -3,6 +3,26 @@ import numpy as np
 
 
 class SimplexGrid:
+    """Create a stepwise Simplex grid.
+
+    :param scales: Scale of the Simplex noise
+    :type scales: array_like
+    :param thresholds: Threshold for Simplex values
+    :type thresholds: array_like
+    :param bases: Base for Simplex values
+    :type bases: array_like
+    :param octaves: Octaves for Simplex values
+    :type octaves: array_like
+    :param l1: Length of system in a direction
+    :type l1: float
+    :param l2: Length of system in a direction
+    :type l2: float
+    :param n1: Number of grid cells in direction corresponding to length l1
+    :type n1: int
+    :param n2: Number of grid cells in direction corresponding to length l2
+    :type n2: int
+    """
+
     def __init__(self, scale, threshold, l1, l2, n1, n2, **kwargs):
         self.grid1 = np.linspace(0, l1, n1)
         self.grid2 = np.linspace(0, l2, n2)
@@ -16,6 +36,11 @@ class SimplexGrid:
             self.scale, l2 / self.scale
 
     def simplex(self):
+        """Creates a Simplex grid.
+
+        :returns noise_grid: Simplex grid
+        :rtype noise_grid: np.ndarray
+        """
         noise_grid = np.zeros((self.n1, self.n2))
         randomize(period=4096, seed=self.seed)
 
@@ -26,6 +51,15 @@ class SimplexGrid:
         return noise_grid
 
     def __call__(self, seed, base):
+        """Returns the Simplex grid.
+
+        :param seed: Seed for randomization
+        :type seed: int
+        :param base: Base for shifting noise coordinates
+        :type base: float
+        :returns grid: Simplex noise grid
+        :rtype grid: np.ndarray
+        """
         self.seed = seed
         self.kwargs['base'] = base
         grid = self.simplex()
@@ -58,9 +92,6 @@ class CreateMultipleSimplexGrids:
     :type N: int
     :param seedgen: Seed generator
     :type seedgen: iterator
-    :returns dictionary: Dictionary containing Simplex parameters for a specific
-                         grid.
-    :type dictionary: dict
     """
 
     def __init__(self, scales, thresholds, bases, octaves, l1, l2, n1, n2, N, seedgen, **kwargs):
@@ -85,6 +116,12 @@ class CreateMultipleSimplexGrids:
                            'octave': []}
 
     def __call__(self):
+        """Creates multiple Simplex grids and stores in dictionary.
+
+        :returns dictionary: Dictionary containing Simplex parameters for a
+                             specific grid.
+        :rtype dictionary: dict
+        """
         rng = np.random.default_rng(42)
         n_bases = self.bases.shape[0]
 
