@@ -106,7 +106,6 @@ class CreateMultipleSimplexGrids:
         self.N = N
         self.kwargs = kwargs
         self.seedgen = seedgen
-        self.criterion = criterion
 
         self.dictionary = {'seed': [],
                            'scale': [],
