@@ -92,9 +92,11 @@ class CreateMultipleSimplexGrids:
     :type N: int
     :param seedgen: Seed generator
     :type seedgen: iterator
+    :param criterion: Some criterion for which
     """
 
-    def __init__(self, scales, thresholds, bases, octaves, l1, l2, n1, n2, N, seedgen, **kwargs):
+    def __init__(self, scales, thresholds, bases, octaves, l1, l2, n1, n2, N,
+                 seedgen, criterion=None, **kwargs):
         self.n1 = n1
         self.n2 = n2
         self.l1 = l1
@@ -106,6 +108,7 @@ class CreateMultipleSimplexGrids:
         self.N = N
         self.kwargs = kwargs
         self.seedgen = seedgen
+        self.criterion = criterion
 
         self.dictionary = {'seed': [],
                            'scale': [],
@@ -113,6 +116,14 @@ class CreateMultipleSimplexGrids:
                            'threshold': [],
                            'grid': [],
                            'octave': []}
+
+    def update_dictionary(self, seeds, grids, bases, octaves, thresholds, scales):
+        self.dictionary['seed'].append(seeds)
+        self.dictionary['base'].append(bases)
+        self.dictionary['grid'].append(grids)
+        self.dictionary['octave'].append(octaves)
+        self.dictionary['threshold'].append(thresholds)
+        self.dictionary['scale'].append(scales)
 
     def __call__(self):
         """Creates multiple Simplex grids and stores in dictionary.
@@ -140,13 +151,20 @@ class CreateMultipleSimplexGrids:
 
                     grids = np.array([simp_grid(seed=s, base=b)
                                      for s, b in zip(seeds, bases_rng)])
+                    tmp = np.ones(self.N)
 
-                    self.dictionary['seed'].append(seeds)
-                    self.dictionary['base'].append(bases_rng)
-                    self.dictionary['grid'].append(grids)
-                    self.dictionary['octave'].append(tmp * octave)
-                    self.dictionary['threshold'].append(tmp * threshold)
-                    self.dictionary['scale'].append(tmp * scale)
+                    if self.criterion is not None:
+                        inds = self.criterion(grids)
+                        if inds.shape[0] > 0:
+                            seeds = seeds[inds]
+                            grids = grids[inds]
+                            tmp = tmp[inds]
+                            bases_rng = bases_rng[inds]
+                            self.update_dictionary(
+                                seeds, grids, bases, tmp * octave, tmp * threshold, tmp * scale)
+                    else:
+                        self.update_dictionary(
+                            seeds, grids, bases, tmp * octave, tmp * threshold, tmp * scale)
 
         return self.dictionary
 
