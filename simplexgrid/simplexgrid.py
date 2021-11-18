@@ -161,10 +161,10 @@ class CreateMultipleSimplexGrids:
                             tmp = tmp[inds]
                             bases_rng = bases_rng[inds]
                             self.update_dictionary(
-                                seeds, grids, bases, tmp * octave, tmp * threshold, tmp * scale)
+                                seeds, grids, bases_rng, tmp * octave, tmp * threshold, tmp * scale)
                     else:
                         self.update_dictionary(
-                            seeds, grids, bases, tmp * octave, tmp * threshold, tmp * scale)
+                            seeds, grids, bases_rng, tmp * octave, tmp * threshold, tmp * scale)
 
         return self.dictionary
 
