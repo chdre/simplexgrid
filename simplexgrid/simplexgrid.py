@@ -118,12 +118,12 @@ class CreateMultipleSimplexGrids:
                            'octave': []}
 
     def update_dictionary(self, seeds, grids, bases, octaves, thresholds, scales):
-        self.dictionary['seed'].append(seeds)
-        self.dictionary['base'].append(bases)
-        self.dictionary['grid'].append(grids)
-        self.dictionary['octave'].append(octaves)
-        self.dictionary['threshold'].append(thresholds)
-        self.dictionary['scale'].append(scales)
+        self.dictionary['seed'].extend(seeds)
+        self.dictionary['base'].extend(bases)
+        self.dictionary['grid'].extend(grids)
+        self.dictionary['octave'].extend(octaves)
+        self.dictionary['threshold'].extend(thresholds)
+        self.dictionary['scale'].extend(scales)
 
     def __call__(self):
         """Creates multiple Simplex grids and stores in dictionary.
