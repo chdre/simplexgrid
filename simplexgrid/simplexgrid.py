@@ -147,9 +147,10 @@ class CreateMultipleSimplexGrids:
                                             n1=self.n1,
                                             n2=self.n2)
 
-                    seeds = np.array([self.seedgen() for i in range(self.N)])
+                    seeds = np.array([self.seedgen()
+                                     for i in range(self.N)], dtype=int)
 
-                    grids = np.array([simp_grid(seed=s, base=b)
+                    grids = np.array([simp_grid(seed=s, base=b).astype(np.int8)
                                      for s, b in zip(seeds, bases_rng)])
                     tmp = np.ones(self.N)
 
