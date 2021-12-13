@@ -3,23 +3,23 @@ import numpy as np
 
 
 class SimplexGrid:
-    """Create a stepwise Simplex grid.
+    """Create a grid of stepwise Simplex noise.
 
-    :param scales: Scale of the Simplex noise
+    :param scales: Scale of the Simplex noise.
     :type scales: array_like
-    :param thresholds: Threshold for Simplex values
+    :param thresholds: Threshold for Simplex values.
     :type thresholds: array_like
-    :param bases: Base for Simplex values
+    :param bases: Base for Simplex values.
     :type bases: array_like
-    :param octaves: Octaves for Simplex values
+    :param octaves: Octaves for Simplex values.
     :type octaves: array_like
-    :param l1: Length of system in a direction
+    :param l1: Length of system in a direction.
     :type l1: float
-    :param l2: Length of system in a direction
+    :param l2: Length of system in a direction.
     :type l2: float
-    :param n1: Number of grid cells in direction corresponding to length l1
+    :param n1: Number of grid cells in direction corresponding to length l1.
     :type n1: int
-    :param n2: Number of grid cells in direction corresponding to length l2
+    :param n2: Number of grid cells in direction corresponding to length l2.
     :type n2: int
     """
 
@@ -44,18 +44,21 @@ class SimplexGrid:
         noise_grid = np.zeros((self.n1, self.n2))
         randomize(period=4096, seed=self.seed)
 
-        noise_vals = np.array([snoise2(x / self.scale, y / self.scale, **self.kwargs)
-                               for x in self.grid1 for y in self.grid2]).reshape(self.n1, self.n2)
+        noise_vals = np.array([
+            snoise2(x / self.scale, y / self.scale, **self.kwargs)
+            for x in self.grid1 for y in self.grid2
+        ]).reshape(self.n1, self.n2)
         noise_grid += noise_vals > self.threshold
 
         return noise_grid
 
-    def __call__(self, seed, base):
+    def __call__(self, seed, base=0.0):
         """Returns the Simplex grid.
 
         :param seed: Seed for randomization
         :type seed: int
-        :param base: Base for shifting noise coordinates
+        :param base: Base for shifting noise coordinates. Defaults to zero, i.e.
+                     no shift.
         :type base: float
         :returns grid: Simplex noise grid
         :rtype grid: np.ndarray
@@ -71,32 +74,34 @@ class CreateMultipleSimplexGrids:
     """Create multiple stepwise Simplex grids and store the parameters used in a
     dictionary.
 
-    :param scales: Scale of the Simplex noise
+    :param scales: Scale of the Simplex noise.
     :type scales: array_like
-    :param thresholds: Threshold for Simplex values
+    :param thresholds: Threshold for Simplex values.
     :type thresholds: array_like
-    :param bases: Base for Simplex values
+    :param bases: Base for Simplex values.
     :type bases: array_like
-    :param octaves: Octaves for Simplex values
+    :param octaves: Octaves for Simplex values.
     :type octaves: array_like
-    :param l1: Length of system in a direction
+    :param l1: Length of system in a direction.
     :type l1: float
-    :param l2: Length of system in a direction
+    :param l2: Length of system in a direction.
     :type l2: float
-    :param n1: Number of grid cells in direction corresponding to length l1
+    :param n1: Number of grid cells in direction corresponding to length l1.
     :type n1: int
-    :param n2: Number of grid cells in direction corresponding to length l2
+    :param n2: Number of grid cells in direction corresponding to length l2.
     :type n2: int
     :param N: Number of samples for each combination of scale, threshold, base
-              and octave
+              and octave.
     :type N: int
-    :param seedgen: Seed generator
+    :param seedgen: Seed generator.
     :type seedgen: iterator
-    :param criterion: Some criterion for which
+    :param criterion: Some criterion for which.
+    :type criterion: function
     """
 
-    def __init__(self, scales, thresholds, bases, octaves, l1, l2, n1, n2, N,
-                 seedgen, criterion=None, **kwargs):
+    def __init__(self, scales, thresholds, octaves, l1, l2, n1, n2, N,
+                 seedgen, bases=None, criterion=None, corrcoef_threshold=None,
+                 **kwargs):
         self.n1 = n1
         self.n2 = n2
         self.l1 = l1
@@ -110,20 +115,16 @@ class CreateMultipleSimplexGrids:
         self.seedgen = seedgen
         self.criterion = criterion
 
-        self.dictionary = {'seed': [],
-                           'scale': [],
-                           'base': [],
-                           'threshold': [],
-                           'grid': [],
-                           'octave': []}
+        self.x = np.arange(0, self.n1, 1)
+        self.y = np.arange(0, self.n2, 1)
+        self.px = np.ones(self.x.shape[0], dtype=np.int16) / self.x.shape[0]
+        self.py = np.ones(self.y.shape[0], dtype=np.int16) / self.y.shape[0]
 
-    def update_dictionary(self, seeds, grids, bases, octaves, thresholds, scales):
-        self.dictionary['seed'].extend(seeds)
-        self.dictionary['base'].extend(bases)
-        self.dictionary['grid'].extend(grids)
-        self.dictionary['octave'].extend(octaves)
-        self.dictionary['threshold'].extend(thresholds)
-        self.dictionary['scale'].extend(scales)
+        possible_params = ['scale', 'threshold', 'octave', 'base']
+        params = [param for val, param in zip(
+            params, possible_params) if val is not None].extend(['seed', 'grid'])
+
+        self.dictionary = Dictionary(params)
 
     def __call__(self):
         """Creates multiple Simplex grids and stores in dictionary.
@@ -132,14 +133,15 @@ class CreateMultipleSimplexGrids:
                              specific grid.
         :rtype dictionary: dict
         """
-        rng = np.random.default_rng(42)
-        n_bases = self.bases.shape[0]
+        if self.bases is not None:
+            rng = np.random.default_rng(42)
+            n_bases = self.bases.shape[0]
+        else:
+            bases = self.bases
 
         for octave in self.octaves:
             for threshold in self.thresholds:
                 for scale in self.scales:
-                    bases_rng = rng.choice(self.bases, size=self.N, p=np.ones(
-                        n_bases, dtype=np.float16) / n_bases)
                     simp_grid = SimplexGrid(scale=scale,
                                             threshold=threshold,
                                             l1=self.l1,
@@ -149,25 +151,84 @@ class CreateMultipleSimplexGrids:
 
                     seeds = np.array([self.seedgen()
                                      for i in range(self.N)], dtype=int)
+                    if self.bases is not None:
+                        bases = rng.choice(self.bases, size=self.N, p=np.ones(
+                            n_bases, dtype=np.float16) / n_bases)
+                        grids = np.array([simp_grid(seed=s, base=b).astype(np.int8)
+                                         for s, b in zip(seeds, bases)])
+                    else:
+                        grids = np.array([simp_grid(seed=s).astype(np.int8)
+                                         for s in seeds])
 
-                    grids = np.array([simp_grid(seed=s, base=b).astype(np.int8)
-                                     for s, b in zip(seeds, bases_rng)])
+                    # Rolling arrays
+                    roll = np.array([(rng.choice(self.x, size=1, p=self.px)[0],
+                                      rng.choice(self.y, size=1, p=self.py)[0])
+                                     for i in range(self.N)])
+                    grids = np.array([np.roll(grids[i], roll[i], (0, 1))
+                                     for i in range(self.N)])
+
                     tmp = np.ones(self.N)
-
                     if self.criterion is not None:
                         inds = self.criterion(grids)
                         if inds.shape[0] > 0:
                             seeds = seeds[inds]
                             grids = grids[inds]
                             tmp = tmp[inds]
-                            bases_rng = bases_rng[inds]
-                            self.update_dictionary(
-                                seeds, grids, bases_rng, tmp * octave, tmp * threshold, tmp * scale)
-                    else:
-                        self.update_dictionary(
-                            seeds, grids, bases_rng, tmp * octave, tmp * threshold, tmp * scale)
+                            bases = bases[inds]
 
+                            self.dictionary.extend(
+                                seed=seeds,
+                                base=bases,
+                                octave=tmp * octave,
+                                threshold=tmp * threshold,
+                                scale=tmp * scale,
+                                grid=grids
+                            )
+                    else:
+                        self.dictionary.extend(
+                            seed=seeds,
+                            base=bases,
+                            octave=tmp * octave,
+                            threshold=tmp * threshold,
+                            scale=tmp * scale,
+                            grid=grids
+                        )
         return self.dictionary
+
+
+class Dictionary:
+    """Creates a dictionary for keeping track of parameters.
+
+    :param params: Variable name of parameters.
+    :type params: list
+    """
+
+    def __init__(self, params):
+        self.dictionary = {}
+        for p in params:
+            self.dictionary[p] = []
+
+    def extend(self, **kwargs):
+        for key, val in kwargs.items():
+            if key in self.dictionary.keys():
+                self.dictionary[key].extend(val)
+
+    def __str__(self):
+        return str(self.dictionary)
+
+    def __call__(self):
+        return self.dictionary
+
+    def save(self, path, filename='dictionary'):
+        """Saves the dictionary by pickle.
+
+        :param path: Path to save dictionary.
+        :type path: Pathlib.PosixPath
+        :param filename: Filename of dictionary. Defaults to 'dictionary'.
+        :type filename: str
+        """
+        with open(path, 'rb') as f:
+            pickle.dump(path / filename, self.dictionary)
 
 
 class SeedGenerator:
