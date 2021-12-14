@@ -70,7 +70,7 @@ class SimplexGrid:
         return grid
 
 
-class CreateMultipleSimplexGrids:
+class CreateMultipleSimplexGrids(Dictionary):
     """Create multiple stepwise Simplex grids and store the parameters used in a
     dictionary.
 
@@ -96,12 +96,11 @@ class CreateMultipleSimplexGrids:
     :param seedgen: Seed generator.
     :type seedgen: iterator
     :param criterion: Some criterion for which.
-    :type criterion: function
+    :type criterion: function'
     """
 
     def __init__(self, scales, thresholds, octaves, l1, l2, n1, n2, N,
-                 seedgen, bases=None, criterion=None, corrcoef_threshold=None,
-                 **kwargs):
+                 seedgen, bases=None, criterion=None, **kwargs):
         self.n1 = n1
         self.n2 = n2
         self.l1 = l1
