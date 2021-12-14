@@ -70,6 +70,41 @@ class SimplexGrid:
         return grid
 
 
+class Dictionary:
+    """Creates a dictionary for keeping track of parameters.
+
+    :param params: Variable name of parameters.
+    :type params: list
+    """
+
+    def __init__(self, params):
+        self.dictionary = {}
+        for p in params:
+            self.dictionary[p] = []
+
+    def extend(self, **kwargs):
+        for key, val in kwargs.items():
+            if key in self.dictionary.keys():
+                self.dictionary[key].extend(val)
+
+    def __str__(self):
+        return str(self.dictionary)
+
+    def __call__(self):
+        return self.dictionary
+
+    def save(self, path, filename='dictionary'):
+        """Saves the dictionary by pickle.
+
+        :param path: Path to save dictionary.
+        :type path: Pathlib.PosixPath
+        :param filename: Filename of dictionary. Defaults to 'dictionary'.
+        :type filename: str
+        """
+        with open(path, 'rb') as f:
+            pickle.dump(path / filename, self.dictionary)
+
+
 class CreateMultipleSimplexGrids(Dictionary):
     """Create multiple stepwise Simplex grids and store the parameters used in a
     dictionary.
@@ -119,9 +154,13 @@ class CreateMultipleSimplexGrids(Dictionary):
         self.px = np.ones(self.x.shape[0], dtype=np.int16) / self.x.shape[0]
         self.py = np.ones(self.y.shape[0], dtype=np.int16) / self.y.shape[0]
 
-        possible_params = ['scale', 'threshold', 'octave', 'base']
-        params = [param for val, param in zip(
-            params, possible_params) if val is not None].extend(['seed', 'grid'])
+        # Create the parameters for the dictionary to only have parameters that
+        # are not None.
+        possible_params = ['scales', 'thresholds', 'octaves', 'bases']
+        _locals = locals()
+        params = [param for param in possible_params if _locals[param] is not None]
+        # Extending the list
+        params.extend(['seed', 'grid'])
 
         self.dictionary = Dictionary(params)
 
@@ -193,41 +232,6 @@ class CreateMultipleSimplexGrids(Dictionary):
                             grid=grids
                         )
         return self.dictionary
-
-
-class Dictionary:
-    """Creates a dictionary for keeping track of parameters.
-
-    :param params: Variable name of parameters.
-    :type params: list
-    """
-
-    def __init__(self, params):
-        self.dictionary = {}
-        for p in params:
-            self.dictionary[p] = []
-
-    def extend(self, **kwargs):
-        for key, val in kwargs.items():
-            if key in self.dictionary.keys():
-                self.dictionary[key].extend(val)
-
-    def __str__(self):
-        return str(self.dictionary)
-
-    def __call__(self):
-        return self.dictionary
-
-    def save(self, path, filename='dictionary'):
-        """Saves the dictionary by pickle.
-
-        :param path: Path to save dictionary.
-        :type path: Pathlib.PosixPath
-        :param filename: Filename of dictionary. Defaults to 'dictionary'.
-        :type filename: str
-        """
-        with open(path, 'rb') as f:
-            pickle.dump(path / filename, self.dictionary)
 
 
 class SeedGenerator:
