@@ -202,12 +202,12 @@ class CreateMultipleSimplexGrids(Dictionary):
                     roll = np.array([(rng.choice(self.x, size=1, p=self.px)[0],
                                       rng.choice(self.y, size=1, p=self.py)[0])
                                      for i in range(self.N)])
-                    grids = np.array([np.roll(grid[i], roll[i], (0, 1))
+                    grid = np.array([np.roll(grid[i], roll[i], (0, 1))
                                      for i in range(self.N)])
 
                     tmp = np.ones(self.N)
                     if self.criterion is not None:
-                        inds = self.criterion(grids)
+                        inds = self.criterion(grid)
                         if inds.shape[0] > 0:
                             seed = seed[inds]
                             grid = grid[inds]
