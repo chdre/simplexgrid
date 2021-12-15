@@ -5,12 +5,12 @@ import numpy as np
 class SimplexGrid:
     """Create a grid of stepwise Simplex noise.
 
-    :param scales: Scale of the Simplex noise.
-    :type scales: array_like
-    :param thresholds: Threshold for Simplex values.
-    :type thresholds: array_like
-    :param bases: Base for Simplex values.
-    :type bases: array_like
+    :param scale: Scale of the Simplex noise.
+    :type scale: array_like
+    :param threshold: Threshold for Simplex values.
+    :type threshold: array_like
+    :param base: Base for Simplex values.
+    :type base: array_like
     :param octaves: Octaves for Simplex values.
     :type octaves: array_like
     :param l1: Length of system in a direction.
@@ -109,12 +109,12 @@ class CreateMultipleSimplexGrids(Dictionary):
     """Create multiple stepwise Simplex grids and store the parameters used in a
     dictionary.
 
-    :param scales: Scale of the Simplex noise.
-    :type scales: array_like
-    :param thresholds: Threshold for Simplex values.
-    :type thresholds: array_like
-    :param bases: Base for Simplex values.
-    :type bases: array_like
+    :param scale: Scale of the Simplex noise.
+    :type scale: array_like
+    :param threshold: Threshold for Simplex values.
+    :type threshold: array_like
+    :param base: Base for Simplex values.
+    :type base: array_like
     :param octaves: Octaves for Simplex values.
     :type octaves: array_like
     :param l1: Length of system in a direction.
@@ -134,15 +134,15 @@ class CreateMultipleSimplexGrids(Dictionary):
     :type criterion: function'
     """
 
-    def __init__(self, scales, thresholds, octaves, l1, l2, n1, n2, N,
-                 seedgen, bases=None, criterion=None, **kwargs):
+    def __init__(self, scale, threshold, octaves, l1, l2, n1, n2, N,
+                 seedgen, base=None, criterion=None, **kwargs):
         self.n1 = n1
         self.n2 = n2
         self.l1 = l1
         self.l2 = l2
-        self.scales = scales
-        self.thresholds = thresholds
-        self.bases = bases
+        self.scale = scale
+        self.threshold = threshold
+        self.base = base
         self.octaves = octaves
         self.N = N
         self.kwargs = kwargs
@@ -156,7 +156,7 @@ class CreateMultipleSimplexGrids(Dictionary):
 
         # Create the parameters for the dictionary to only have parameters that
         # are not None.
-        possible_params = ['scales', 'thresholds', 'octaves', 'bases']
+        possible_params = ['scale', 'threshold', 'octaves', 'base']
         _locals = locals()
         params = [param for param in possible_params if _locals[param] is not None]
         # Extending the list
@@ -171,15 +171,15 @@ class CreateMultipleSimplexGrids(Dictionary):
                              specific grid.
         :rtype dictionary: dict
         """
-        if self.bases is not None:
+        if self.base is not None:
             rng = np.random.default_rng(42)
-            n_bases = self.bases.shape[0]
+            n_bases = self.base.shape[0]
         else:
-            bases = self.bases
+            base = self.base
 
-        for octave in self.octaves:
-            for threshold in self.thresholds:
-                for scale in self.scales:
+        for octaves in self.octaves:
+            for threshold in self.threshold:
+                for scale in self.scale:
                     simp_grid = SimplexGrid(scale=scale,
                                             threshold=threshold,
                                             l1=self.l1,
@@ -187,49 +187,49 @@ class CreateMultipleSimplexGrids(Dictionary):
                                             n1=self.n1,
                                             n2=self.n2)
 
-                    seeds = np.array([self.seedgen()
+                    seed = np.array([self.seedgen()
                                      for i in range(self.N)], dtype=int)
-                    if self.bases is not None:
-                        bases = rng.choice(self.bases, size=self.N, p=np.ones(
+                    if self.base is not None:
+                        base = rng.choice(self.base, size=self.N, p=np.ones(
                             n_bases, dtype=np.float16) / n_bases)
-                        grids = np.array([simp_grid(seed=s, base=b).astype(np.int8)
-                                         for s, b in zip(seeds, bases)])
+                        grid = np.array([simp_grid(seed=s, base=b).astype(np.int8)
+                                         for s, b in zip(seed, base)])
                     else:
-                        grids = np.array([simp_grid(seed=s).astype(np.int8)
-                                         for s in seeds])
+                        grid = np.array([simp_grid(seed=s).astype(np.int8)
+                                         for s in seed])
 
                     # Rolling arrays
                     roll = np.array([(rng.choice(self.x, size=1, p=self.px)[0],
                                       rng.choice(self.y, size=1, p=self.py)[0])
                                      for i in range(self.N)])
-                    grids = np.array([np.roll(grids[i], roll[i], (0, 1))
+                    grids = np.array([np.roll(grid[i], roll[i], (0, 1))
                                      for i in range(self.N)])
 
                     tmp = np.ones(self.N)
                     if self.criterion is not None:
                         inds = self.criterion(grids)
                         if inds.shape[0] > 0:
-                            seeds = seeds[inds]
-                            grids = grids[inds]
+                            seed = seed[inds]
+                            grid = grid[inds]
                             tmp = tmp[inds]
-                            bases = bases[inds]
+                            base = base[inds]
 
                             self.dictionary.extend(
-                                seed=seeds,
-                                base=bases,
-                                octave=tmp * octave,
+                                seed=seed,
+                                base=base,
+                                octaves=tmp * octaves,
                                 threshold=tmp * threshold,
                                 scale=tmp * scale,
-                                grid=grids
+                                grid=grid
                             )
                     else:
                         self.dictionary.extend(
-                            seed=seeds,
-                            base=bases,
-                            octave=tmp * octave,
+                            seed=seed,
+                            base=base,
+                            octaves=tmp * octaves,
                             threshold=tmp * threshold,
                             scale=tmp * scale,
-                            grid=grids
+                            grid=grid
                         )
         return self.dictionary
 
