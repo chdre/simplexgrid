@@ -172,7 +172,7 @@ class CreateMultipleSimplexGrids(Dictionary):
         :rtype dictionary: dict
         """
         if self.base is not None:
-            rng = np.random.default_rng(42)
+            rng = np.random.default_rng(self.seedgen.start)
             n_bases = self.base.shape[0]
         else:
             base = self.base
