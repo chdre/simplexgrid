@@ -160,7 +160,7 @@ class CreateMultipleSimplexGrids(Dictionary):
         _locals = locals()
         params = [param for param in possible_params if _locals[param] is not None]
         # Extending the list
-        params.extend(['seed', 'grid'])
+        params.extend(['seed', 'grid', 'roll'])
 
         self.dictionary = Dictionary(params)
 
@@ -220,7 +220,8 @@ class CreateMultipleSimplexGrids(Dictionary):
                                 octaves=tmp * octaves,
                                 threshold=tmp * threshold,
                                 scale=tmp * scale,
-                                grid=grid
+                                grid=grid,
+                                roll=roll
                             )
                     else:
                         self.dictionary.extend(
@@ -229,7 +230,8 @@ class CreateMultipleSimplexGrids(Dictionary):
                             octaves=tmp * octaves,
                             threshold=tmp * threshold,
                             scale=tmp * scale,
-                            grid=grid
+                            grid=grid,
+                            roll=roll
                         )
         return self.dictionary
 
