@@ -76,7 +76,7 @@ class SimplexGrid:
         self.seed = seed
         self.kwargs['base'] = base
         self.roll = roll
-        grid = self.simplex(seed=seed, base=base, roll=roll)
+        grid = self.simplex()
 
         return grid
 
