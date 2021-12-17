@@ -27,7 +27,7 @@ class SimplexGrid:
     :type roll: array_like
     """
 
-    def __init__(self, scale, threshold, l1, l2, n1, n2, roll=(0, 0), **kwargs):
+    def __init__(self, scale, threshold, l1, l2, n1, n2, **kwargs):
         self.grid1 = np.linspace(0, l1, n1)
         self.grid2 = np.linspace(0, l2, n2)
         self.n1 = n1
@@ -35,7 +35,6 @@ class SimplexGrid:
         self.noise_grid = np.zeros((n1, n2))
         self.scale = scale
         self.threshold = threshold
-        self.roll = roll
         self.kwargs = kwargs
         self.kwargs['repeatx'], self.kwargs['repeaty'] = l1 / \
             self.scale, l2 / self.scale
@@ -59,7 +58,7 @@ class SimplexGrid:
 
         return noise_grid
 
-    def __call__(self, seed, base=0.0):
+    def __call__(self, seed, base=0.0, roll=(0, 0)):
         """Returns the Simplex grid.
 
         :param seed: Seed for randomization
@@ -67,12 +66,17 @@ class SimplexGrid:
         :param base: Base for shifting noise coordinates. Defaults to zero, i.e.
                      no shift.
         :type base: float
+        :param roll: Can be used to roll the Simplex noise array using numpy roll.
+                     Defaults to (0, 0), i.e. no rolling. Used to offset the
+                     Simplex coordinates, typically if making many samples.
+        :type roll: array_like
         :returns grid: Simplex noise grid
         :rtype grid: np.ndarray
         """
         self.seed = seed
         self.kwargs['base'] = base
-        grid = self.simplex()
+        self.roll = roll
+        grid = self.simplex(seed=seed, base=base, roll=roll)
 
         return grid
 
