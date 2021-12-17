@@ -213,6 +213,7 @@ class CreateMultipleSimplexGrids(Dictionary):
                             grid = grid[inds]
                             tmp = tmp[inds]
                             base = base[inds]
+                            roll = roll[inds]
 
                             self.dictionary.extend(
                                 seed=seed,
