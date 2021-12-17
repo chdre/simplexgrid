@@ -178,24 +178,19 @@ class CreateMultipleSimplexGrids(Dictionary):
                              specific grid.
         :rtype dictionary: dict
         """
+        rng = np.random.default_rng(self.seedgen.start)
         if self.base is not None:
-            rng = np.random.default_rng(self.seedgen.start)
             n_bases = self.base.shape[0]
         else:
-            base = self.base
+            base = np.zeros(self.N)
 
         for octaves in self.octaves:
             for threshold in self.threshold:
                 for scale in self.scale:
                     # Rolling arrays
-                    roll = np.array([(rng.choice(self.x, size=1, p=self.px)[0],
-                                      rng.choice(self.y, size=1, p=self.py)[0])
-                                     for i in range(self.N)])
-
                     simp_grid = SimplexGrid(scale=scale,
                                             threshold=threshold,
                                             octaves=octaves,
-                                            roll=roll,
                                             l1=self.l1,
                                             l2=self.l2,
                                             n1=self.n1,
@@ -203,14 +198,19 @@ class CreateMultipleSimplexGrids(Dictionary):
 
                     seed = np.array([self.seedgen()
                                      for i in range(self.N)], dtype=int)
+
+                    roll = np.array([(rng.choice(self.x, size=1, p=self.px)[0],
+                                      rng.choice(self.y, size=1, p=self.py)[0])
+                                     for i in range(self.N)])
+
                     if self.base is not None:
                         base = rng.choice(self.base, size=self.N, p=np.ones(
                             n_bases, dtype=np.float16) / n_bases)
-                        grid = np.array([simp_grid(seed=s, base=b).astype(np.int8)
-                                         for s, b in zip(seed, base)])
+                        grid = np.array([simp_grid(seed=s, base=b, roll=r).astype(np.int8)
+                                         for s, b, r in zip(seed, base, roll)])
                     else:
-                        grid = np.array([simp_grid(seed=s).astype(np.int8)
-                                         for s in seed])
+                        grid = np.array([simp_grid(seed=s, roll=r).astype(np.int8)
+                                         for s, r in zip(seed, roll)])
 
                     tmp = np.ones(self.N)
                     if self.criterion is not None:
