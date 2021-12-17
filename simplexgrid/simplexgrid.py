@@ -21,9 +21,13 @@ class SimplexGrid:
     :type n1: int
     :param n2: Number of grid cells in direction corresponding to length l2.
     :type n2: int
+    :param roll: Can be used to roll the Simplex noise array using numpy roll.
+                 Defaults to (0, 0), i.e. no rolling. Used to offset the
+                 Simplex coordinates if making many samples.
+    :type roll: array_like
     """
 
-    def __init__(self, scale, threshold, l1, l2, n1, n2, **kwargs):
+    def __init__(self, scale, threshold, l1, l2, n1, n2, roll=(0, 0), **kwargs):
         self.grid1 = np.linspace(0, l1, n1)
         self.grid2 = np.linspace(0, l2, n2)
         self.n1 = n1
@@ -31,6 +35,7 @@ class SimplexGrid:
         self.noise_grid = np.zeros((n1, n2))
         self.scale = scale
         self.threshold = threshold
+        self.roll = roll
         self.kwargs = kwargs
         self.kwargs['repeatx'], self.kwargs['repeaty'] = l1 / \
             self.scale, l2 / self.scale
@@ -49,6 +54,8 @@ class SimplexGrid:
             for x in self.grid1 for y in self.grid2
         ]).reshape(self.n1, self.n2)
         noise_grid += noise_vals > self.threshold
+
+        noise_grid = np.roll(noise_grid, self.roll, (0, 1))
 
         return noise_grid
 
