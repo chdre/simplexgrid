@@ -45,18 +45,18 @@ class SimplexGrid:
         :returns noise_grid: Simplex grid
         :rtype noise_grid: np.ndarray
         """
-        noise_grid = np.zeros((self.n1, self.n2))
-        randomize(period=4096, seed=self.seed)
+
+        randomize(seed=self.seed, period=4096)
 
         noise_vals = np.array([
             snoise2(x / self.scale, y / self.scale, **self.kwargs)
             for x in self.grid1 for y in self.grid2
         ]).reshape(self.n1, self.n2)
-        noise_grid += noise_vals > self.threshold
+        self.noise_grid += noise_vals > self.threshold
 
-        noise_grid = np.roll(noise_grid, self.roll, (0, 1))
+        self.noise_grid = np.roll(self.noise_grid, self.roll, (0, 1))
 
-        return noise_grid
+        return self.noise_grid
 
     def __call__(self, seed, base=0.0, roll=(0, 0)):
         """Returns the Simplex grid.
