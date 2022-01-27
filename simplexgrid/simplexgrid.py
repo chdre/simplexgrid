@@ -74,7 +74,8 @@ class SimplexGrid:
         :rtype grid: np.ndarray
         """
         self.seed = seed
-        self.base = base
+        if base != 0.0:
+            self.kwargs['base'] = base
         self.roll = roll
         grid = self.simplex()
 
