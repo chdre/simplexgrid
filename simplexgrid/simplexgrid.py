@@ -32,7 +32,6 @@ class SimplexGrid:
         self.grid2 = np.linspace(0, l2, n2)
         self.n1 = n1
         self.n2 = n2
-        self.noise_grid = np.zeros((n1, n2))
         self.scale = scale
         self.threshold = threshold
         self.kwargs = kwargs
@@ -48,15 +47,17 @@ class SimplexGrid:
 
         randomize(seed=self.seed, period=4096)
 
+        noise_grid = np.zeros((n1, n2))
+
         noise_vals = np.array([
             snoise2(x / self.scale, y / self.scale, **self.kwargs)
             for x in self.grid1 for y in self.grid2
         ]).reshape(self.n1, self.n2)
-        self.noise_grid += noise_vals > self.threshold
+        noise_grid += noise_vals > self.threshold
 
-        self.noise_grid = np.roll(self.noise_grid, self.roll, (0, 1))
+        noise_grid = np.roll(noise_grid, self.roll, (0, 1))
 
-        return self.noise_grid
+        return noise_grid
 
     def __call__(self, seed, base=0.0, roll=(0, 0)):
         """Returns the Simplex grid.
