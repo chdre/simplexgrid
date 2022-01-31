@@ -47,7 +47,7 @@ class SimplexGrid:
 
         randomize(seed=self.seed, period=4096)
 
-        noise_grid = np.zeros((n1, n2))
+        noise_grid = np.zeros((self.n1, self.n2))
 
         noise_vals = np.array([
             snoise2(x / self.scale, y / self.scale, **self.kwargs)
