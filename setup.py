@@ -20,6 +20,6 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     install_requires=[
-        'noise_randomized @ git+https://git@github.com/chdre/noise-randomized@master#egg=noise_randomized'],
+        'noise_randomized'],
     include_package_data=True,
 )
